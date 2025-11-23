@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-data-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: test_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d test_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - data-network
+
+  # Data Cleaner Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: data-cleaner-app
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: test_db
+      DB_USER: postgres
+      DB_PASSWORD: password
+      SOURCE_PATH: /app/source
+      TARGET_PATH: /app/target
+    volumes:
+      - ./source:/app/source
+      - ./target:/app/target
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - data-network
+
+volumes:
+  postgres_data:
+
+networks:
+  data-network:
+    driver: bridge

@@ -465,7 +465,7 @@ You can customize the behavior by modifying:
 ---
 
 ##  Screenshots 
-![ss](img\Screenshot 2025-11-22 192434.png)
+![ss](ss.png)
 
 
 
